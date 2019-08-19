@@ -3,15 +3,18 @@ package org.yeauty.standard;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.stomp.StompSubframeAggregator;
+import io.netty.handler.codec.stomp.StompSubframeDecoder;
+import io.netty.handler.codec.stomp.StompSubframeEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.yeauty.pojo.PojoEndpointServer;
 
-import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -46,9 +49,9 @@ public class WebsocketServer {
                 .childOption(ChannelOption.SO_LINGER, config.getSoLinger())
                 .childOption(ChannelOption.ALLOW_HALF_CLOSURE, config.isAllowHalfClosure())
                 .handler(new LoggingHandler(LogLevel.DEBUG))
-                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                .childHandler(new ChannelInitializer<SocketChannel >() {
                     @Override
-                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                    protected void initChannel(SocketChannel  ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new HttpServerCodec());
                         pipeline.addLast(new HttpObjectAggregator(65536));
@@ -77,7 +80,7 @@ public class WebsocketServer {
         }
 
         channelFuture.addListener(future -> {
-            if (!future.isSuccess()){
+            if (!future.isSuccess()) {
                 future.cause().printStackTrace();
             }
         });

@@ -9,6 +9,9 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketServerCompressionHandler;
+import io.netty.handler.codec.stomp.StompSubframeAggregator;
+import io.netty.handler.codec.stomp.StompSubframeDecoder;
+import io.netty.handler.codec.stomp.StompSubframeEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 import org.springframework.util.StringUtils;
@@ -206,6 +209,9 @@ class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
             if (config.isUseCompressionHandler()) {
                 pipeline.addLast(new WebSocketServerCompressionHandler());
             }
+            pipeline.addLast("decoder", new StompSubframeDecoder());
+            pipeline.addLast("encoder", new StompSubframeEncoder());
+            pipeline.addLast("aggregator", new StompSubframeAggregator(1048576));
             pipeline.addLast(new WebSocketServerHandler(pojoEndpointServer));
             final String finalPath = path;
             final String finalOriginalParam = originalParam;
