@@ -8,7 +8,11 @@ import io.netty.handler.codec.stomp.DefaultStompFrame;
 import io.netty.handler.codec.stomp.StompCommand;
 import io.netty.handler.codec.stomp.StompFrame;
 import io.netty.handler.codec.stomp.StompHeaders;
+import org.springframework.util.StringUtils;
 import org.yeauty.pojo.PojoEndpointServer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
     private enum ClientState {
@@ -29,52 +33,63 @@ class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
         if (msg instanceof WebSocketFrame) {
             handleWebSocketFrame(ctx, (WebSocketFrame) msg);
         } else {
-            handleStompFrame(ctx, (StompFrame)msg);
+            handleStompFrame(ctx, (DefaultSTOMPFrame)msg);
         }
     }
 
-    private void handleStompFrame(ChannelHandlerContext ctx, StompFrame frame) {
-        String subscrReceiptId = "001";
-        String disconReceiptId = "002";
-        switch (frame.command()) {
-            case CONNECTED:
-                StompFrame subscribeFrame = new DefaultStompFrame(StompCommand.SUBSCRIBE);
-                subscribeFrame.headers().set(StompHeaders.DESTINATION, "jms.topic.exampleTopic");
-                subscribeFrame.headers().set(StompHeaders.RECEIPT, subscrReceiptId);
-                subscribeFrame.headers().set(StompHeaders.ID, "1");
-                System.out.println("connected, sending subscribe frame: " + subscribeFrame);
-                state = ClientState.AUTHENTICATED;
-                ctx.writeAndFlush(subscribeFrame);
-                break;
-            case RECEIPT:
-                String receiptHeader = frame.headers().getAsString(StompHeaders.RECEIPT_ID);
-                if (state == ClientState.AUTHENTICATED && receiptHeader.equals(subscrReceiptId)) {
-                    StompFrame msgFrame = new DefaultStompFrame(StompCommand.SEND);
-                    msgFrame.headers().set(StompHeaders.DESTINATION, "jms.topic.exampleTopic");
-                    msgFrame.content().writeBytes("some payload".getBytes());
-                    System.out.println("subscribed, sending message frame: " + msgFrame);
-                    state = ClientState.SUBSCRIBED;
-                    ctx.writeAndFlush(msgFrame);
-                } else if (state == ClientState.DISCONNECTING && receiptHeader.equals(disconReceiptId)) {
-                    System.out.println("disconnected");
-                    ctx.close();
-                } else {
-                    throw new IllegalStateException("received: " + frame + ", while internal state is " + state);
-                }
-                break;
-            case MESSAGE:
-                if (state == ClientState.SUBSCRIBED) {
-                    System.out.println("received frame: " + frame);
-                    StompFrame disconnFrame = new DefaultStompFrame(StompCommand.DISCONNECT);
-                    disconnFrame.headers().set(StompHeaders.RECEIPT, disconReceiptId);
-                    System.out.println("sending disconnect frame: " + disconnFrame);
-                    state = ClientState.DISCONNECTING;
-                    ctx.writeAndFlush(disconnFrame);
-                }
-                break;
-            default:
-                break;
+    private void handleStompFrame(ChannelHandlerContext ctx, DefaultSTOMPFrame frame) {
+        STOMPCommandType type = frame.getType();
+        if (StringUtils.isEmpty(type)) {
+            if ("h".equals(frame.getContent())) {
+                handleHeartBeat(ctx, frame);
+            }
+        } else {
+            switch (type) {
+                case CONNECT:
+                    handleConnect(ctx,frame);
+                    break;
+                case SEND:
+                    handleSend(ctx,frame);
+                    break;
+                case SUBSCRIBE:
+                    handleSubscribe(ctx,frame);
+                    break;
+                case UNSUBSCRIBE:
+                    handleUnsubscribe(ctx,frame);
+                    break;
+            }
         }
+    }
+    private void handleUnsubscribe(ChannelHandlerContext channelHandlerContext, DefaultSTOMPFrame frame) {
+        System.out.println("handleUnsubscribe");
+        // Add logic
+    }
+
+    private void handleSubscribe(ChannelHandlerContext channelHandlerContext, DefaultSTOMPFrame frame) {
+        System.out.println("handleSubscribe");
+        // Add logic
+    }
+
+    private void handleSend(ChannelHandlerContext channelHandlerContext, DefaultSTOMPFrame frame) {
+        System.out.println("handleSend");
+        // Add logic
+    }
+
+    private void handleConnect(ChannelHandlerContext channelHandlerContext, DefaultSTOMPFrame frame) {
+        STOMPFrame oConnected = new DefaultSTOMPFrame(null, null, "o");
+        channelHandlerContext.channel().writeAndFlush(oConnected);
+        Map<String,String> headers = new HashMap<>();
+        headers.put("version",headers.get("accept-version")==null?"1.1":headers.get("accept-version").split(",")[0]);
+        headers.put("heart-beat",frame.getHeaders().get("heart-beat"));
+
+        STOMPFrame connected = new DefaultSTOMPFrame(STOMPCommandType.CONNECTED,
+                headers);
+        channelHandlerContext.channel().writeAndFlush(connected);
+    }
+
+    private void handleHeartBeat(ChannelHandlerContext channelHandlerContext, DefaultSTOMPFrame frame) {
+        STOMPFrame resultF = new DefaultSTOMPFrame(null, null, "a[\"\\n\"]");
+        channelHandlerContext.channel().writeAndFlush(resultF);
     }
 
     @Override
@@ -124,5 +139,8 @@ class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
         connFrame.headers().set(StompHeaders.PASSCODE, "guest");
         ctx.writeAndFlush(connFrame);
     }
+
+
+
 
 }

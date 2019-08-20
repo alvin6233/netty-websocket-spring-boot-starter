@@ -121,6 +121,7 @@ public class PojoEndpointServer {
                 methodMapping.getOnClose().invoke(implement,
                         methodMapping.getOnCloseArgs(session));
             } catch (Throwable t) {
+                ctx.close();
                 logger.error(t);
             }
         }
@@ -156,6 +157,7 @@ public class PojoEndpointServer {
                 method.invoke(implement, args);
             } catch (Throwable t) {
                 logger.error(t);
+                ctx.close();
             }
         }
     }

@@ -49,9 +49,9 @@ public class WebsocketServer {
                 .childOption(ChannelOption.SO_LINGER, config.getSoLinger())
                 .childOption(ChannelOption.ALLOW_HALF_CLOSURE, config.isAllowHalfClosure())
                 .handler(new LoggingHandler(LogLevel.DEBUG))
-                .childHandler(new ChannelInitializer<SocketChannel >() {
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
-                    protected void initChannel(SocketChannel  ch) throws Exception {
+                    protected void initChannel(NioSocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new HttpServerCodec());
                         pipeline.addLast(new HttpObjectAggregator(65536));
