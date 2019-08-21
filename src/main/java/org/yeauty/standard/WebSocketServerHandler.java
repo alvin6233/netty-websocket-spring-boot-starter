@@ -129,16 +129,16 @@ class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        state = WebSocketServerHandler.ClientState.AUTHENTICATING;
-        StompFrame connFrame = new DefaultStompFrame(StompCommand.CONNECT);
-        connFrame.headers().set(StompHeaders.ACCEPT_VERSION, "1.2");
-        connFrame.headers().set(StompHeaders.HOST, "127.0.0.1");
-        connFrame.headers().set(StompHeaders.LOGIN, "guest");
-        connFrame.headers().set(StompHeaders.PASSCODE, "guest");
-        ctx.writeAndFlush(connFrame);
-    }
+//    @Override
+//    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//        state = WebSocketServerHandler.ClientState.AUTHENTICATING;
+//        StompFrame connFrame = new DefaultStompFrame(StompCommand.CONNECT);
+//        connFrame.headers().set(StompHeaders.ACCEPT_VERSION, "1.2");
+//        connFrame.headers().set(StompHeaders.HOST, "127.0.0.1");
+//        connFrame.headers().set(StompHeaders.LOGIN, "guest");
+//        connFrame.headers().set(StompHeaders.PASSCODE, "guest");
+//        ctx.writeAndFlush(connFrame);
+//    }
 
 
 
